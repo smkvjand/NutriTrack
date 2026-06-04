@@ -1,0 +1,140 @@
+Build a complete production-ready single-page web application called "Meal Completion Tracker".
+
+Requirements:
+
+* Must be a single index.html file.
+* Must run entirely in the browser.
+* Must be deployable directly to GitHub Pages.
+* Use HTML, CSS, and vanilla JavaScript only.
+* No build tools.
+* No React.
+* No Node.js.
+* Mobile-first design.
+* Apple-inspired UI.
+* Responsive on phones and desktops.
+
+Purpose:
+
+Parents upload food photos throughout a meal.
+
+The AI determines whether a child has eaten enough food for their age and body size.
+
+Workflow:
+
+1. Create Child Profile
+
+   * Name
+   * Age
+   * Gender
+   * Height
+   * Weight
+   * Vegetarian toggle
+
+2. Start Meal Session
+
+   * Breakfast
+   * Lunch
+   * Dinner
+   * Snack
+
+3. Upload Multiple Photos
+
+   * User can add multiple photos to the same meal
+   * Each photo is stored in the meal session
+
+4. AI Analysis
+
+Send all meal photos plus child profile data to OpenAI GPT-4o Vision API.
+
+Prompt the AI to:
+
+* Detect foods
+* Estimate portions
+* Estimate calories
+* Estimate protein
+* Estimate carbs
+* Estimate fats
+* Estimate fiber
+* Determine meal completion percentage
+* Estimate remaining food needed
+* Suggest practical foods to complete the meal
+
+5. Dashboard
+
+Display:
+
+Meal Completion %
+Large circular progress indicator
+
+Status:
+
+* Not Yet
+* Mostly
+* Complete
+
+Remaining Food Needed
+
+Examples:
+
+"1 chapati + 1/2 cup dal"
+
+"1 bowl curd rice"
+
+"1 banana + glass of milk"
+
+6. History
+
+Store meal sessions in localStorage.
+
+Show:
+
+* Date
+* Meal Type
+* Completion Score
+* AI Summary
+
+7. Charts
+
+Use Chart.js.
+
+Show:
+
+* Weekly completion score
+* Daily calories
+* Daily protein
+
+8. OpenAI Integration
+
+Create a settings modal.
+
+User enters their own OpenAI API key.
+
+Store API key only in browser localStorage.
+
+Never hardcode API keys.
+
+9. AI Prompt
+
+The AI should determine:
+
+"Has this child eaten enough food yet?"
+
+Return:
+
+{
+"meal_completion_percentage": 0,
+"status": "",
+"remaining_calories": 0,
+"remaining_protein": 0,
+"additional_food_needed": [],
+"summary": ""
+}
+
+10. Design
+
+Modern glassmorphism cards.
+Smooth animations.
+Professional healthcare dashboard appearance.
+Production-quality UI.
+
+Generate the complete index.html file.
