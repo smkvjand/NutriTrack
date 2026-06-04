@@ -1,140 +1,1250 @@
-Build a complete production-ready single-page web application called "Meal Completion Tracker".
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>NutriTrack Kids – Meal Completion Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #006e1c;
+  --primary-light: #4caf50;
+  --primary-bg: #e8f5e9;
+  --primary-dim: #78dc77;
+  --surface: #f9f9fb;
+  --surface-low: #f3f3f5;
+  --surface-container: #eeeef0;
+  --surface-high: #e8e8ea;
+  --surface-highest: #e2e2e4;
+  --on-surface: #1a1c1d;
+  --on-surface-v: #3f4a3c;
+  --outline: #6f7a6b;
+  --outline-v: #becab9;
+  --error: #ba1a1a;
+  --error-bg: #ffdad6;
+  --white: #ffffff;
+  --shadow-sm: 0 2px 12px rgba(0,0,0,.05);
+  --shadow-md: 0 4px 20px rgba(0,0,0,.07);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.09);
+  --r-sm: 12px;
+  --r: 16px;
+  --r-md: 20px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --r-full: 9999px;
+  --nav-h: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--surface);
+  color: var(--on-surface);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+input, select, textarea { font-family: inherit; }
+img { display: block; max-width: 100%; }
+ul { list-style: none; }
 
-Requirements:
+/* ── Scrollbars ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--outline-v); border-radius: 4px; }
 
-* Must be a single index.html file.
-* Must run entirely in the browser.
-* Must be deployable directly to GitHub Pages.
-* Use HTML, CSS, and vanilla JavaScript only.
-* No build tools.
-* No React.
-* No Node.js.
-* Mobile-first design.
-* Apple-inspired UI.
-* Responsive on phones and desktops.
+/* ── Typography helpers ──────────────────────────────────────── */
+.t-display { font-size: clamp(26px, 6vw, 34px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.t-headline { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; }
+.t-title { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.25; }
+.t-body-lg { font-size: 17px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.41; }
+.t-body { font-size: 15px; font-weight: 400; line-height: 1.4; }
+.t-label { font-size: 13px; font-weight: 500; letter-spacing: 0.02em; line-height: 1.38; }
+.t-caps { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; line-height: 1.33; text-transform: uppercase; }
+.t-muted { color: var(--on-surface-v); }
 
-Purpose:
+/* ── Layout ──────────────────────────────────────────────────── */
+.container { max-width: 600px; margin: 0 auto; padding: 0 20px; }
+.page { display: none; animation: fadeUp .3s ease both; }
+.page.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
 
-Parents upload food photos throughout a meal.
+/* ── Bottom Nav ──────────────────────────────────────────────── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,.88);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid var(--outline-v);
+  display: flex; z-index: 100;
+  padding-bottom: var(--safe-bottom);
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 10px 0 8px; font-size: 10px; font-weight: 600;
+  letter-spacing: .05em; text-transform: uppercase;
+  color: var(--outline); transition: color .2s;
+}
+.nav-item.active { color: var(--primary); }
+.nav-icon { font-size: 22px; line-height: 1; transition: transform .2s; }
+.nav-item.active .nav-icon { transform: scale(1.1); }
 
-The AI determines whether a child has eaten enough food for their age and body size.
+/* ── Top Bar ─────────────────────────────────────────────────── */
+.top-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(249,249,251,.88);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--outline-v);
+}
+.top-bar-inner { max-width: 600px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.top-bar-title { font-size: 17px; font-weight: 600; }
 
-Workflow:
-
-1. Create Child Profile
-
-   * Name
-   * Age
-   * Gender
-   * Height
-   * Weight
-   * Vegetarian toggle
-
-2. Start Meal Session
-
-   * Breakfast
-   * Lunch
-   * Dinner
-   * Snack
-
-3. Upload Multiple Photos
-
-   * User can add multiple photos to the same meal
-   * Each photo is stored in the meal session
-
-4. AI Analysis
-
-Send all meal photos plus child profile data to OpenAI GPT-4o Vision API.
-
-Prompt the AI to:
-
-* Detect foods
-* Estimate portions
-* Estimate calories
-* Estimate protein
-* Estimate carbs
-* Estimate fats
-* Estimate fiber
-* Determine meal completion percentage
-* Estimate remaining food needed
-* Suggest practical foods to complete the meal
-
-5. Dashboard
-
-Display:
-
-Meal Completion %
-Large circular progress indicator
-
-Status:
-
-* Not Yet
-* Mostly
-* Complete
-
-Remaining Food Needed
-
-Examples:
-
-"1 chapati + 1/2 cup dal"
-
-"1 bowl curd rice"
-
-"1 banana + glass of milk"
-
-6. History
-
-Store meal sessions in localStorage.
-
-Show:
-
-* Date
-* Meal Type
-* Completion Score
-* AI Summary
-
-7. Charts
-
-Use Chart.js.
-
-Show:
-
-* Weekly completion score
-* Daily calories
-* Daily protein
-
-8. OpenAI Integration
-
-Create a settings modal.
-
-User enters their own OpenAI API key.
-
-Store API key only in browser localStorage.
-
-Never hardcode API keys.
-
-9. AI Prompt
-
-The AI should determine:
-
-"Has this child eaten enough food yet?"
-
-Return:
-
-{
-"meal_completion_percentage": 0,
-"status": "",
-"remaining_calories": 0,
-"remaining_protein": 0,
-"additional_food_needed": [],
-"summary": ""
+/* ── Cards ───────────────────────────────────────────────────── */
+.card {
+  background: var(--white);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  padding: 20px;
+}
+.card-subtle {
+  background: var(--surface-low);
+  border-radius: var(--r-lg);
+  padding: 16px;
 }
 
-10. Design
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; border-radius: var(--r-full);
+  font-size: 15px; font-weight: 600; padding: 14px 24px;
+  transition: transform .15s, box-shadow .15s, opacity .15s;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary {
+  background: linear-gradient(135deg, #006e1c 0%, #1b8f2f 100%);
+  color: #fff; box-shadow: 0 4px 16px rgba(0,110,28,.28);
+}
+.btn-primary:hover { box-shadow: 0 6px 20px rgba(0,110,28,.36); }
+.btn-secondary {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+.btn-ghost { color: var(--on-surface-v); background: var(--surface-container); }
+.btn-danger { background: var(--error-bg); color: var(--error); }
+.btn-block { width: 100%; }
+.btn-sm { font-size: 13px; padding: 9px 16px; }
+.btn:disabled { opacity: .5; pointer-events: none; }
 
-Modern glassmorphism cards.
-Smooth animations.
-Professional healthcare dashboard appearance.
-Production-quality UI.
+/* ── Form Elements ───────────────────────────────────────────── */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 13px; font-weight: 600; letter-spacing: .02em; color: var(--on-surface-v); }
+.form-input {
+  height: 52px; border-radius: var(--r);
+  background: var(--surface-low);
+  border: 2px solid transparent;
+  padding: 0 16px; font-size: 15px; color: var(--on-surface);
+  transition: border-color .2s, background .2s;
+  outline: none; width: 100%;
+}
+.form-input:focus { border-color: var(--primary-light); background: var(--white); }
+select.form-input { appearance: none; cursor: pointer; }
+.form-input::placeholder { color: var(--outline); }
 
-Generate the complete index.html file.
+/* ── Toggle ──────────────────────────────────────────────────── */
+.toggle-wrap { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--surface-low); border-radius: var(--r); }
+.toggle { position: relative; width: 50px; height: 30px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; cursor: pointer;
+  background: var(--outline-v); border-radius: 30px;
+  transition: background .25s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute;
+  width: 24px; height: 24px; background: #fff;
+  border-radius: 50%; left: 3px; top: 3px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.2);
+  transition: transform .25s;
+}
+.toggle input:checked + .toggle-slider { background: var(--primary-light); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* ── Chip / Tag ──────────────────────────────────────────────── */
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: var(--r-full);
+  font-size: 12px; font-weight: 600; letter-spacing: .03em;
+  background: var(--primary-bg); color: var(--primary);
+}
+.chip-orange { background: #fff3e0; color: #e65100; }
+.chip-blue { background: #e3f2fd; color: #1565c0; }
+.chip-red { background: var(--error-bg); color: var(--error); }
+
+/* ── Progress Ring ───────────────────────────────────────────── */
+.ring-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.ring-label { position: absolute; text-align: center; }
+.ring svg { transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-linecap: round; transition: stroke-dashoffset .8s cubic-bezier(.4,0,.2,1); }
+.ring-track { stroke: var(--primary-bg); }
+.ring-progress { stroke: var(--primary-light); }
+
+/* ── Macro Bars ──────────────────────────────────────────────── */
+.macro-bar-wrap { display: flex; flex-direction: column; gap: 4px; }
+.macro-bar-track { height: 6px; background: var(--surface-container); border-radius: 6px; overflow: hidden; }
+.macro-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--primary-light), #2e7d32); transition: width .8s ease; }
+
+/* ── Meal Type Grid ──────────────────────────────────────────── */
+.meal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.meal-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 18px 12px; border-radius: var(--r-lg);
+  background: var(--surface-low); border: 2px solid transparent;
+  cursor: pointer; transition: all .2s; user-select: none;
+}
+.meal-tile.selected { background: var(--primary-bg); border-color: var(--primary-light); }
+.meal-tile-icon { font-size: 32px; }
+.meal-tile-label { font-size: 14px; font-weight: 600; color: var(--on-surface-v); }
+.meal-tile.selected .meal-tile-label { color: var(--primary); }
+
+/* ── Photo Grid ──────────────────────────────────────────────── */
+.photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.photo-thumb {
+  aspect-ratio: 1; border-radius: var(--r-sm); overflow: hidden;
+  position: relative; background: var(--surface-container);
+}
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-remove {
+  position: absolute; top: 4px; right: 4px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(0,0,0,.55); color: #fff;
+  font-size: 13px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.photo-add {
+  aspect-ratio: 1; border-radius: var(--r-sm); border: 2px dashed var(--outline-v);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; cursor: pointer; color: var(--outline);
+  font-size: 12px; font-weight: 600; transition: all .2s;
+  background: var(--surface-low);
+}
+.photo-add:hover { border-color: var(--primary-light); color: var(--primary); background: var(--primary-bg); }
+.photo-add-icon { font-size: 28px; }
+
+/* ── Section Header ──────────────────────────────────────────── */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+
+/* ── List Items ──────────────────────────────────────────────── */
+.list-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px; background: var(--white);
+  border-bottom: 0.5px solid var(--surface-container);
+}
+.list-item:first-child { border-radius: var(--r-sm) var(--r-sm) 0 0; }
+.list-item:last-child { border-radius: 0 0 var(--r-sm) var(--r-sm); border-bottom: none; }
+.list-item:only-child { border-radius: var(--r-sm); border-bottom: none; }
+
+/* ── Status Badge ────────────────────────────────────────────── */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--r-full);
+  font-size: 13px; font-weight: 700; letter-spacing: .03em;
+}
+.status-not-yet { background: #fff3e0; color: #bf360c; }
+.status-mostly { background: #fffde7; color: #f57f17; }
+.status-complete { background: var(--primary-bg); color: var(--primary); }
+
+/* ── Modals ──────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  backdrop-filter: blur(4px); z-index: 200;
+  display: none; align-items: flex-end; justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--white); border-radius: var(--r-xl) var(--r-xl) 0 0;
+  width: 100%; max-width: 600px;
+  padding: 24px 20px calc(20px + var(--safe-bottom));
+  max-height: 92dvh; overflow-y: auto;
+  animation: slideUp .3s cubic-bezier(.32,1.1,.7,1) both;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+.modal-handle { width: 36px; height: 4px; background: var(--outline-v); border-radius: 4px; margin: 0 auto 20px; }
+
+/* ── Loading / Spinner ───────────────────────────────────────── */
+.spinner {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 3px solid var(--primary-bg);
+  border-top-color: var(--primary-light);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.ai-loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 40px 20px; }
+.ai-loading p { font-size: 15px; color: var(--on-surface-v); }
+
+/* ── Onboarding / Hero ───────────────────────────────────────── */
+.hero {
+  background: linear-gradient(145deg, #e8f5e9 0%, #f1f8e9 50%, #f9f9fb 100%);
+  border-radius: var(--r-xl); padding: 32px 24px; text-align: center;
+  margin-bottom: 24px; position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '🥦'; font-size: 80px; position: absolute;
+  top: -10px; right: -10px; opacity: .15; transform: rotate(15deg);
+}
+.hero::after {
+  content: '🍎'; font-size: 60px; position: absolute;
+  bottom: -8px; left: -8px; opacity: .15; transform: rotate(-20deg);
+}
+.hero-emoji { font-size: 52px; margin-bottom: 12px; }
+
+/* ── Empty State ─────────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 48px 20px; color: var(--on-surface-v); }
+.empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+
+/* ── Scrollable page padding ─────────────────────────────────── */
+.page-content { padding: 16px 20px calc(80px + var(--safe-bottom)); max-width: 600px; margin: 0 auto; }
+
+/* ── Toast ───────────────────────────────────────────────────── */
+.toast {
+  position: fixed; top: 80px; left: 50%; transform: translateX(-50%) translateY(-20px);
+  background: var(--on-surface); color: var(--white);
+  padding: 10px 20px; border-radius: var(--r-full);
+  font-size: 14px; font-weight: 500; z-index: 999;
+  opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Avatar ──────────────────────────────────────────────────── */
+.avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.avatar-green { background: var(--primary-bg); }
+.avatar-orange { background: #fff3e0; }
+.avatar-blue { background: #e3f2fd; }
+
+/* ── Settings icon ───────────────────────────────────────────── */
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-container); font-size: 18px;
+  cursor: pointer; transition: background .2s;
+  flex-shrink: 0;
+}
+.icon-btn:hover { background: var(--surface-high); }
+
+/* ── Step indicator ──────────────────────────────────────────── */
+.steps { display: flex; gap: 6px; align-items: center; }
+.step { width: 8px; height: 8px; border-radius: 50%; background: var(--outline-v); transition: all .3s; }
+.step.active { width: 20px; border-radius: 4px; background: var(--primary-light); }
+.step.done { background: var(--primary); }
+
+/* ── Divider ─────────────────────────────────────────────────── */
+.divider { height: 1px; background: var(--outline-v); margin: 16px 0; }
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (min-width: 640px) {
+  .meal-grid { grid-template-columns: repeat(4, 1fr); }
+  .photo-grid { grid-template-columns: repeat(4, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ PAGES ══════════════════════════════ -->
+
+<!-- PAGE: Home / Dashboard -->
+<div id="page-home" class="page active">
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <div>
+        <div class="t-caps t-muted" id="home-greeting">Good morning</div>
+        <div class="top-bar-title" id="home-child-name">NutriTrack Kids</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="icon-btn" id="btn-open-settings" title="Settings">⚙️</button>
+        <button class="icon-btn" id="btn-new-meal-top" title="New Meal">➕</button>
+      </div>
+    </div>
+  </div>
+  <div class="page-content" id="home-content">
+    <!-- Rendered dynamically -->
+  </div>
+</div>
+
+<!-- PAGE: New Meal -->
+<div id="page-meal" class="page">
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <button class="icon-btn" id="btn-back-meal">←</button>
+      <div class="top-bar-title">New Meal</div>
+      <div class="steps" id="meal-steps">
+        <div class="step active" id="ms1"></div>
+        <div class="step" id="ms2"></div>
+        <div class="step" id="ms3"></div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content" id="meal-content"></div>
+</div>
+
+<!-- PAGE: History -->
+<div id="page-history" class="page">
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <div class="top-bar-title">History</div>
+      <button class="icon-btn" id="btn-clear-history" title="Clear all">🗑️</button>
+    </div>
+  </div>
+  <div class="page-content" id="history-content"></div>
+</div>
+
+<!-- PAGE: Charts -->
+<div id="page-charts" class="page">
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <div class="top-bar-title">Insights</div>
+    </div>
+  </div>
+  <div class="page-content" id="charts-content"></div>
+</div>
+
+<!-- PAGE: Profile -->
+<div id="page-profile" class="page">
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <div class="top-bar-title">Child Profile</div>
+    </div>
+  </div>
+  <div class="page-content" id="profile-content"></div>
+</div>
+
+<!-- ═══════════════════ BOTTOM NAV ═════════════════════════════ -->
+<nav class="bottom-nav">
+  <button class="nav-item active" data-page="home"><span class="nav-icon">🏠</span>Home</button>
+  <button class="nav-item" data-page="meal"><span class="nav-icon">🍽️</span>Meal</button>
+  <button class="nav-item" data-page="history"><span class="nav-icon">📋</span>History</button>
+  <button class="nav-item" data-page="charts"><span class="nav-icon">📊</span>Charts</button>
+  <button class="nav-item" data-page="profile"><span class="nav-icon">👤</span>Profile</button>
+</nav>
+
+<!-- ═══════════════════════ MODALS ═════════════════════════════ -->
+
+<!-- Settings Modal -->
+<div class="modal-backdrop" id="modal-settings">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="t-title" style="margin-bottom:4px">Settings</div>
+    <div class="t-body t-muted" style="margin-bottom:20px">Your data stays in your browser only.</div>
+    <div class="form-group" style="margin-bottom:16px">
+      <label class="form-label">OpenAI API Key</label>
+      <input type="password" class="form-input" id="input-api-key" placeholder="sk-…"/>
+      <div class="t-label t-muted" style="margin-top:4px">Key is stored locally and never sent to our servers.</div>
+    </div>
+    <button class="btn btn-primary btn-block" id="btn-save-settings">Save Settings</button>
+    <div style="height:12px"></div>
+    <button class="btn btn-ghost btn-block" id="btn-close-settings">Cancel</button>
+  </div>
+</div>
+
+<!-- Result Modal -->
+<div class="modal-backdrop" id="modal-result">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="modal-result-content"></div>
+    <div style="height:12px"></div>
+    <button class="btn btn-primary btn-block" id="btn-close-result">Done</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Hidden file input -->
+<input type="file" id="file-input" accept="image/*" multiple style="display:none"/>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+const STATE = {
+  currentPage: 'home',
+  mealStep: 1,       // 1=pick type, 2=photos, 3=analysing
+  mealType: null,
+  mealPhotos: [],    // {dataUrl, file}
+  apiKey: localStorage.getItem('nk_api_key') || '',
+  profile: JSON.parse(localStorage.getItem('nk_profile') || 'null'),
+  history: JSON.parse(localStorage.getItem('nk_history') || '[]'),
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════════
+function save() {
+  localStorage.setItem('nk_history', JSON.stringify(STATE.history));
+  localStorage.setItem('nk_profile', JSON.stringify(STATE.profile));
+}
+function toast(msg, dur = 2200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+}
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+function statusClass(pct) {
+  if (pct >= 80) return 'status-complete';
+  if (pct >= 45) return 'status-mostly';
+  return 'status-not-yet';
+}
+function statusText(pct) {
+  if (pct >= 80) return 'Complete ✓';
+  if (pct >= 45) return 'Mostly';
+  return 'Not Yet';
+}
+function mealEmoji(type) {
+  return { breakfast:'🌅', lunch:'☀️', dinner:'🌙', snack:'🍌' }[type] || '🍽️';
+}
+function fileToDataUrl(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function navigate(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  document.querySelector(`[data-page="${pageId}"]`)?.classList.add('active');
+  STATE.currentPage = pageId;
+  if (pageId === 'home') renderHome();
+  if (pageId === 'meal') { STATE.mealStep = 1; STATE.mealType = null; STATE.mealPhotos = []; renderMealStep(); }
+  if (pageId === 'history') renderHistory();
+  if (pageId === 'charts') renderCharts();
+  if (pageId === 'profile') renderProfile();
+}
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => navigate(btn.dataset.page));
+});
+document.getElementById('btn-back-meal').addEventListener('click', () => navigate('home'));
+document.getElementById('btn-new-meal-top').addEventListener('click', () => navigate('meal'));
+
+// ═══════════════════════════════════════════════════════════════
+//  SETTINGS MODAL
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('btn-open-settings').addEventListener('click', () => {
+  document.getElementById('input-api-key').value = STATE.apiKey;
+  document.getElementById('modal-settings').classList.add('open');
+});
+document.getElementById('btn-close-settings').addEventListener('click', () => {
+  document.getElementById('modal-settings').classList.remove('open');
+});
+document.getElementById('btn-save-settings').addEventListener('click', () => {
+  const key = document.getElementById('input-api-key').value.trim();
+  STATE.apiKey = key;
+  localStorage.setItem('nk_api_key', key);
+  document.getElementById('modal-settings').classList.remove('open');
+  toast('API key saved ✓');
+});
+document.getElementById('modal-settings').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  RESULT MODAL
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('btn-close-result').addEventListener('click', () => {
+  document.getElementById('modal-result').classList.remove('open');
+  navigate('home');
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  HOME PAGE
+// ═══════════════════════════════════════════════════════════════
+function renderHome() {
+  document.getElementById('home-greeting').textContent = greeting();
+  const name = STATE.profile?.name || 'there';
+  document.getElementById('home-child-name').textContent = STATE.profile ? `${name}'s Tracker` : 'NutriTrack Kids';
+
+  const el = document.getElementById('home-content');
+  if (!STATE.profile) {
+    el.innerHTML = `
+      <div class="hero" style="margin-bottom:24px">
+        <div class="hero-emoji">🥗</div>
+        <div class="t-display" style="margin-bottom:8px">NutriTrack Kids</div>
+        <div class="t-body t-muted">AI-powered meal completion tracking for growing children.</div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="t-title" style="margin-bottom:8px">Get started</div>
+        <div class="t-body t-muted" style="margin-bottom:16px">Set up your child's profile so the AI can give accurate nutritional guidance.</div>
+        <button class="btn btn-primary btn-block" onclick="navigate('profile')">Create Child Profile →</button>
+      </div>
+      <div class="card-subtle">
+        <div class="t-label t-muted" style="margin-bottom:8px">HOW IT WORKS</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${['📸 Take photos of each dish','🤖 AI analyses portions & nutrition','📊 See completion score & suggestions'].map((s,i)=>`
+            <div style="display:flex;gap:12px;align-items:center">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--primary-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--primary);flex-shrink:0">${i+1}</div>
+              <div class="t-body">${s}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    return;
+  }
+
+  const today = STATE.history.filter(h => {
+    const d = new Date(h.ts);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  });
+
+  const avgCompletion = today.length ? Math.round(today.reduce((a, h) => a + h.completion, 0) / today.length) : 0;
+
+  el.innerHTML = `
+    <!-- Today summary -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div class="ring-wrap">
+          ${ringHTML(avgCompletion, 64, 6)}
+          <div class="ring-label">
+            <div style="font-size:16px;font-weight:700;color:var(--primary)">${avgCompletion}%</div>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div class="t-label t-muted" style="margin-bottom:2px">TODAY'S PROGRESS</div>
+          <div class="t-title">${STATE.profile.name}</div>
+          <div style="margin-top:6px"><span class="status-badge ${statusClass(avgCompletion)}">${statusText(avgCompletion)}</span></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="navigate('meal')">+ Meal</button>
+      </div>
+    </div>
+
+    <!-- Today's meals -->
+    ${today.length ? `
+    <div class="section-header">
+      <div class="t-label t-muted">TODAY'S MEALS</div>
+      <button class="t-label" style="color:var(--primary)" onclick="navigate('history')">See all</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      ${today.slice(0,4).map(h => historyCard(h)).join('')}
+    </div>` : `
+    <div class="card" style="margin-bottom:16px;text-align:center;padding:28px">
+      <div style="font-size:40px;margin-bottom:8px">🍽️</div>
+      <div class="t-title" style="margin-bottom:6px">No meals yet today</div>
+      <div class="t-body t-muted" style="margin-bottom:16px">Upload photos of ${STATE.profile.name}'s meal to get started.</div>
+      <button class="btn btn-primary" onclick="navigate('meal')">Start First Meal</button>
+    </div>`}
+
+    <!-- Quick stats -->
+    ${today.length ? `
+    <div class="section-header"><div class="t-label t-muted">TODAY'S NUTRITION</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
+      ${quickStat('🔥', 'Calories', today.reduce((a,h)=>a+(h.calories||0),0)+'', 'kcal')}
+      ${quickStat('💪', 'Protein', today.reduce((a,h)=>a+(h.protein||0),0).toFixed(1)+'', 'g')}
+      ${quickStat('🌾', 'Carbs', today.reduce((a,h)=>a+(h.carbs||0),0).toFixed(1)+'', 'g')}
+      ${quickStat('🥑', 'Fats', today.reduce((a,h)=>a+(h.fats||0),0).toFixed(1)+'', 'g')}
+    </div>` : ''}
+
+    <!-- API key banner if missing -->
+    ${!STATE.apiKey ? `
+    <div style="background:#fff3e0;border-radius:var(--r-lg);padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="font-size:22px">⚠️</span>
+      <div style="flex:1">
+        <div class="t-label" style="font-weight:700;color:#bf360c">OpenAI API key missing</div>
+        <div class="t-label t-muted">Add your key in Settings to enable AI analysis.</div>
+      </div>
+      <button class="btn btn-sm" style="background:#fff3e0;color:#bf360c;font-size:12px" onclick="document.getElementById('btn-open-settings').click()">Add</button>
+    </div>` : ''}
+  `;
+}
+
+function quickStat(icon, label, value, unit) {
+  return `<div class="card" style="padding:14px">
+    <div style="font-size:22px;margin-bottom:6px">${icon}</div>
+    <div class="t-label t-muted">${label}</div>
+    <div style="font-size:20px;font-weight:700;color:var(--on-surface)">${value} <span style="font-size:12px;color:var(--outline);font-weight:500">${unit}</span></div>
+  </div>`;
+}
+
+function historyCard(h) {
+  return `<div class="card" style="padding:14px 16px;cursor:pointer" onclick="showHistoryDetail('${h.id}')">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="avatar avatar-green" style="font-size:22px">${mealEmoji(h.mealType)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="t-label" style="font-weight:700;text-transform:capitalize">${h.mealType}</div>
+          <span class="chip" style="font-size:11px">${h.completion}%</span>
+        </div>
+        <div class="t-label t-muted" style="margin-top:2px">${fmtTime(h.ts)}</div>
+      </div>
+      <span class="status-badge ${statusClass(h.completion)}" style="font-size:11px">${statusText(h.completion)}</span>
+    </div>
+    ${h.summary ? `<div class="t-label t-muted" style="margin-top:8px;line-height:1.4">${h.summary.slice(0,90)}${h.summary.length>90?'…':''}</div>` : ''}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PROGRESS RING HTML
+// ═══════════════════════════════════════════════════════════════
+function ringHTML(pct, size = 120, stroke = 10) {
+  const r = (size - stroke * 2) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
+  const cx = size / 2, cy = size / 2;
+  return `<div class="ring-wrap" style="width:${size}px;height:${size}px">
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="ring">
+      <circle class="ring-track" cx="${cx}" cy="${cy}" r="${r}" stroke-width="${stroke}"/>
+      <circle class="ring-progress" cx="${cx}" cy="${cy}" r="${r}" stroke-width="${stroke}"
+        stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
+    </svg>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MEAL FLOW
+// ═══════════════════════════════════════════════════════════════
+function renderMealStep() {
+  const el = document.getElementById('meal-content');
+  ['ms1','ms2','ms3'].forEach((id, i) => {
+    const d = document.getElementById(id);
+    d.className = 'step' + (i+1 === STATE.mealStep ? ' active' : (i+1 < STATE.mealStep ? ' done' : ''));
+  });
+
+  if (STATE.mealStep === 1) {
+    el.innerHTML = `
+      <div class="t-title" style="margin-bottom:4px">What meal is this?</div>
+      <div class="t-body t-muted" style="margin-bottom:20px">Select the meal type to begin.</div>
+      <div class="meal-grid" style="margin-bottom:24px">
+        ${[['breakfast','Breakfast','🌅'],['lunch','Lunch','☀️'],['dinner','Dinner','🌙'],['snack','Snack','🍌']].map(([v,l,e])=>`
+          <div class="meal-tile ${STATE.mealType===v?'selected':''}" data-type="${v}" onclick="selectMealType('${v}')">
+            <div class="meal-tile-icon">${e}</div>
+            <div class="meal-tile-label">${l}</div>
+          </div>`).join('')}
+      </div>
+      <button class="btn btn-primary btn-block" onclick="goToStep(2)" ${STATE.mealType?'':'disabled'} id="btn-step1-next">Next: Add Photos →</button>
+    `;
+  } else if (STATE.mealStep === 2) {
+    el.innerHTML = `
+      <div class="t-title" style="margin-bottom:4px">Add Food Photos</div>
+      <div class="t-body t-muted" style="margin-bottom:20px">Upload photos of everything ${STATE.profile?.name||'your child'} is eating. More photos = better analysis.</div>
+      <div class="photo-grid" id="photo-grid" style="margin-bottom:20px"></div>
+      <div id="photo-hint" class="t-label t-muted" style="text-align:center;margin-bottom:20px">
+        📸 Up to 6 photos recommended
+      </div>
+      <button class="btn btn-primary btn-block" onclick="runAnalysis()" ${STATE.mealPhotos.length>0?'':'disabled'} id="btn-analyse">
+        🤖 Analyse with AI
+      </button>
+      <div style="height:10px"></div>
+      <button class="btn btn-ghost btn-block" onclick="goToStep(1)">← Back</button>
+    `;
+    renderPhotoGrid();
+  }
+}
+
+function selectMealType(t) {
+  STATE.mealType = t;
+  document.querySelectorAll('.meal-tile').forEach(tile => {
+    tile.classList.toggle('selected', tile.dataset.type === t);
+  });
+  document.getElementById('btn-step1-next')?.removeAttribute('disabled');
+}
+
+function goToStep(step) {
+  STATE.mealStep = step;
+  renderMealStep();
+}
+
+function renderPhotoGrid() {
+  const grid = document.getElementById('photo-grid');
+  if (!grid) return;
+  let html = STATE.mealPhotos.map((p, i) => `
+    <div class="photo-thumb">
+      <img src="${p.dataUrl}" alt="Food photo"/>
+      <button class="photo-remove" onclick="removePhoto(${i})">✕</button>
+    </div>`).join('');
+  if (STATE.mealPhotos.length < 6) {
+    html += `<div class="photo-add" onclick="triggerFileInput()">
+      <div class="photo-add-icon">📷</div>
+      <div>Add Photo</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+  const analyseBtn = document.getElementById('btn-analyse');
+  if (analyseBtn) {
+    if (STATE.mealPhotos.length > 0) analyseBtn.removeAttribute('disabled');
+    else analyseBtn.setAttribute('disabled', 'true');
+  }
+}
+
+function triggerFileInput() {
+  document.getElementById('file-input').click();
+}
+
+document.getElementById('file-input').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files);
+  for (const f of files) {
+    if (STATE.mealPhotos.length >= 6) break;
+    const dataUrl = await fileToDataUrl(f);
+    STATE.mealPhotos.push({ dataUrl, file: f });
+  }
+  e.target.value = '';
+  renderPhotoGrid();
+});
+
+function removePhoto(idx) {
+  STATE.mealPhotos.splice(idx, 1);
+  renderPhotoGrid();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  AI ANALYSIS
+// ═══════════════════════════════════════════════════════════════
+async function runAnalysis() {
+  if (!STATE.apiKey) {
+    toast('Please add your OpenAI API key in Settings first.');
+    document.getElementById('btn-open-settings').click();
+    return;
+  }
+  if (!STATE.mealPhotos.length) return;
+
+  // Show loading state
+  const el = document.getElementById('meal-content');
+  el.innerHTML = `
+    <div class="ai-loading">
+      <div style="font-size:52px">🤖</div>
+      <div class="spinner"></div>
+      <div class="t-title">Analysing meal…</div>
+      <div class="t-body t-muted" style="text-align:center">The AI is detecting foods, estimating portions, and calculating nutritional completeness.</div>
+    </div>`;
+
+  // Build profile context
+  const p = STATE.profile || {};
+  const profileStr = p.name
+    ? `Child: ${p.name}, Age: ${p.age} years, Gender: ${p.gender}, Height: ${p.height} cm, Weight: ${p.weight} kg, Diet: ${p.vegetarian ? 'Vegetarian' : 'Non-vegetarian'}.`
+    : 'Child profile not provided.';
+
+  // Build messages
+  const imageContents = STATE.mealPhotos.map(ph => ({
+    type: 'image_url',
+    image_url: { url: ph.dataUrl, detail: 'low' }
+  }));
+
+  const systemPrompt = `You are a paediatric nutritionist AI that analyses meal photos for children. Given food photos and a child's profile, you must determine if the child has eaten a nutritionally complete meal for their age, gender, height, and weight.
+
+Return ONLY valid JSON (no markdown, no backticks, no explanation) in this exact schema:
+{
+  "meal_completion_percentage": <0-100 integer>,
+  "status": "<Not Yet | Mostly | Complete>",
+  "detected_foods": ["<food name>"],
+  "calories": <integer kcal estimate>,
+  "protein": <float grams>,
+  "carbs": <float grams>,
+  "fats": <float grams>,
+  "fiber": <float grams>,
+  "remaining_calories": <integer>,
+  "remaining_protein": <float>,
+  "additional_food_needed": ["<practical food suggestion, e.g. 1 chapati + 1/2 cup dal>"],
+  "summary": "<2–3 sentence plain English summary>"
+}`;
+
+  const userContent = [
+    { type: 'text', text: `Child profile: ${profileStr}\nMeal type: ${STATE.mealType || 'unknown'}\nPlease analyse all food visible in the attached photos and determine meal completeness.` },
+    ...imageContents
+  ];
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${STATE.apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        max_tokens: 1000,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent }
+        ]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content || '{}';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+
+    // Save to history
+    const record = {
+      id: Date.now().toString(),
+      ts: Date.now(),
+      mealType: STATE.mealType,
+      completion: result.meal_completion_percentage || 0,
+      status: result.status || 'Not Yet',
+      calories: result.calories || 0,
+      protein: result.protein || 0,
+      carbs: result.carbs || 0,
+      fats: result.fats || 0,
+      fiber: result.fiber || 0,
+      detectedFoods: result.detected_foods || [],
+      additionalFoodNeeded: result.additional_food_needed || [],
+      summary: result.summary || '',
+      remainingCalories: result.remaining_calories || 0,
+      remainingProtein: result.remaining_protein || 0,
+    };
+    STATE.history.unshift(record);
+    save();
+
+    showResultModal(record);
+
+  } catch (err) {
+    el.innerHTML = `
+      <div class="ai-loading">
+        <div style="font-size:48px">❌</div>
+        <div class="t-title" style="color:var(--error)">Analysis failed</div>
+        <div class="t-body t-muted" style="text-align:center">${err.message}</div>
+        <button class="btn btn-primary" onclick="goToStep(2)">← Try Again</button>
+      </div>`;
+  }
+}
+
+function showResultModal(r) {
+  const pct = r.completion;
+  const content = document.getElementById('modal-result-content');
+  content.innerHTML = `
+    <div style="text-align:center;margin-bottom:20px">
+      <div class="ring-wrap" style="width:140px;height:140px;margin:0 auto 12px">
+        ${ringHTML(pct, 140, 12)}
+        <div class="ring-label">
+          <div style="font-size:32px;font-weight:800;color:var(--primary)">${pct}%</div>
+          <div class="t-caps t-muted">Complete</div>
+        </div>
+      </div>
+      <span class="status-badge ${statusClass(pct)}" style="font-size:15px">${statusText(pct)}</span>
+    </div>
+
+    ${r.summary ? `<div class="card-subtle" style="margin-bottom:16px"><div class="t-body" style="line-height:1.55">${r.summary}</div></div>` : ''}
+
+    <!-- Macros -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="t-label t-muted" style="margin-bottom:12px">NUTRITIONAL BREAKDOWN</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        ${macroItem('🔥','Calories', r.calories, 'kcal')}
+        ${macroItem('💪','Protein', r.protein, 'g')}
+        ${macroItem('🌾','Carbs', r.carbs, 'g')}
+        ${macroItem('🥑','Fats', r.fats, 'g')}
+      </div>
+    </div>
+
+    <!-- Detected foods -->
+    ${r.detectedFoods?.length ? `
+    <div style="margin-bottom:16px">
+      <div class="t-label t-muted" style="margin-bottom:8px">DETECTED FOODS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${r.detectedFoods.map(f => `<span class="chip">${f}</span>`).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- Additional food needed -->
+    ${r.additionalFoodNeeded?.length ? `
+    <div class="card" style="margin-bottom:16px;border-left:3px solid var(--primary-light)">
+      <div class="t-label t-muted" style="margin-bottom:8px">SUGGESTED TO COMPLETE MEAL</div>
+      ${r.additionalFoodNeeded.map(f => `
+        <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:0.5px solid var(--outline-v)">
+          <span style="color:var(--primary);font-size:16px;flex-shrink:0">→</span>
+          <div class="t-body">${f}</div>
+        </div>`).join('')}
+    </div>` : ''}
+  `;
+
+  document.getElementById('modal-result').classList.add('open');
+  // Reset meal state
+  STATE.mealPhotos = [];
+  STATE.mealType = null;
+  STATE.mealStep = 1;
+}
+
+function macroItem(icon, label, value, unit) {
+  return `<div>
+    <div style="font-size:20px;margin-bottom:2px">${icon}</div>
+    <div class="t-caps t-muted">${label}</div>
+    <div style="font-size:18px;font-weight:700">${typeof value==='number'?value.toFixed(label==='Calories'?0:1):value} <span style="font-size:12px;color:var(--outline)">${unit}</span></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════════════════════════════════
+function renderHistory() {
+  const el = document.getElementById('history-content');
+  if (!STATE.history.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><div class="t-title" style="margin-bottom:6px">No history yet</div><div class="t-body t-muted">Complete your first meal analysis to see history here.</div></div>`;
+    return;
+  }
+  // Group by date
+  const groups = {};
+  STATE.history.forEach(h => {
+    const key = fmtDate(h.ts);
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(h);
+  });
+
+  el.innerHTML = Object.entries(groups).map(([date, meals]) => `
+    <div style="margin-bottom:24px">
+      <div class="t-label t-muted" style="margin-bottom:10px;padding:0 2px">${date}</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${meals.map(h => `
+          <div class="card" style="padding:16px;cursor:pointer" onclick="showHistoryDetail('${h.id}')">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="avatar avatar-green" style="font-size:22px">${mealEmoji(h.mealType)}</div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div class="t-label" style="font-weight:700;text-transform:capitalize">${h.mealType}</div>
+                  <div class="t-label t-muted">${fmtTime(h.ts)}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+                  <span class="status-badge ${statusClass(h.completion)}" style="font-size:11px">${statusText(h.completion)}</span>
+                  <span class="chip" style="font-size:11px">${h.completion}%</span>
+                  ${h.calories ? `<span class="chip chip-orange" style="font-size:11px">${h.calories} kcal</span>` : ''}
+                </div>
+                ${h.summary ? `<div class="t-label t-muted" style="margin-top:6px;line-height:1.4">${h.summary.slice(0,100)}${h.summary.length>100?'…':''}</div>` : ''}
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function showHistoryDetail(id) {
+  const r = STATE.history.find(h => h.id === id);
+  if (!r) return;
+  showResultModal(r);
+  document.getElementById('modal-result').classList.add('open');
+}
+
+document.getElementById('btn-clear-history').addEventListener('click', () => {
+  if (confirm('Clear all history? This cannot be undone.')) {
+    STATE.history = [];
+    save();
+    renderHistory();
+    toast('History cleared');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  CHARTS
+// ═══════════════════════════════════════════════════════════════
+let chartInstances = {};
+function renderCharts() {
+  const el = document.getElementById('charts-content');
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="t-label t-muted" style="margin-bottom:12px">WEEKLY MEAL COMPLETION (%)</div>
+      <canvas id="chart-completion" height="180"></canvas>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="t-label t-muted" style="margin-bottom:12px">DAILY CALORIES</div>
+      <canvas id="chart-calories" height="160"></canvas>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="t-label t-muted" style="margin-bottom:12px">DAILY PROTEIN (g)</div>
+      <canvas id="chart-protein" height="160"></canvas>
+    </div>`;
+
+  // Destroy old charts
+  Object.values(chartInstances).forEach(c => c.destroy());
+  chartInstances = {};
+
+  // Get last 7 days
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d);
+  }
+  const labels = days.map(d => d.toLocaleDateString('en-IN', { weekday:'short', day:'numeric' }));
+
+  const byDay = days.map(d => {
+    return STATE.history.filter(h => {
+      const hd = new Date(h.ts);
+      return hd.getDate() === d.getDate() && hd.getMonth() === d.getMonth() && hd.getFullYear() === d.getFullYear();
+    });
+  });
+
+  const completionData = byDay.map(arr => arr.length ? Math.round(arr.reduce((a,h)=>a+h.completion,0)/arr.length) : null);
+  const calorieData = byDay.map(arr => arr.reduce((a,h)=>a+(h.calories||0),0) || null);
+  const proteinData = byDay.map(arr => arr.reduce((a,h)=>a+(h.protein||0),0) || null);
+
+  const chartDefaults = {
+    responsive: true,
+    plugins: { legend: { display: false }, tooltip: { mode:'index', intersect:false } },
+    scales: {
+      x: { grid: { display:false }, ticks: { font:{ size:11 }, color:'#6f7a6b' } },
+      y: { grid: { color:'rgba(0,0,0,.05)' }, ticks: { font:{ size:11 }, color:'#6f7a6b' } }
+    }
+  };
+
+  chartInstances.completion = new Chart(document.getElementById('chart-completion'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: completionData,
+        backgroundColor: completionData.map(v => v >= 80 ? '#4caf5099' : v >= 45 ? '#ff980099' : '#f4433699'),
+        borderRadius: 8, borderSkipped: false
+      }]
+    },
+    options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min:0, max:100 } } }
+  });
+
+  chartInstances.calories = new Chart(document.getElementById('chart-calories'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: calorieData, fill: true,
+        borderColor: '#006e1c', backgroundColor: 'rgba(76,175,80,.1)',
+        borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#006e1c',
+        tension: 0.35, spanGaps: true
+      }]
+    },
+    options: chartDefaults
+  });
+
+  chartInstances.protein = new Chart(document.getElementById('chart-protein'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: proteinData, fill: true,
+        borderColor: '#1565c0', backgroundColor: 'rgba(21,101,192,.1)',
+        borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#1565c0',
+        tension: 0.35, spanGaps: true
+      }]
+    },
+    options: chartDefaults
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PROFILE
+// ═══════════════════════════════════════════════════════════════
+function renderProfile() {
+  const el = document.getElementById('profile-content');
+  const p = STATE.profile || {};
+  el.innerHTML = `
+    <div class="hero" style="margin-bottom:20px">
+      <div style="font-size:56px;margin-bottom:8px">👶</div>
+      <div class="t-display">${p.name || 'Create Profile'}</div>
+      ${p.age ? `<div class="t-body t-muted" style="margin-top:4px">${p.age} years • ${p.gender || ''}</div>` : '<div class="t-body t-muted">Set up your child\'s profile</div>'}
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="t-label t-muted" style="margin-bottom:16px">CHILD INFORMATION</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="form-group">
+          <label class="form-label">Child's Name</label>
+          <input class="form-input" id="pf-name" placeholder="e.g. Arjun" value="${p.name||''}"/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Age (years)</label>
+            <input class="form-input" id="pf-age" type="number" min="1" max="17" placeholder="5" value="${p.age||''}"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gender</label>
+            <select class="form-input" id="pf-gender">
+              <option value="" ${!p.gender?'selected':''}>Select</option>
+              <option value="Boy" ${p.gender==='Boy'?'selected':''}>Boy</option>
+              <option value="Girl" ${p.gender==='Girl'?'selected':''}>Girl</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group">
+            <label class="form-label">Height (cm)</label>
+            <input class="form-input" id="pf-height" type="number" placeholder="110" value="${p.height||''}"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Weight (kg)</label>
+            <input class="form-input" id="pf-weight" type="number" step="0.1" placeholder="20" value="${p.weight||''}"/>
+          </div>
+        </div>
+        <div class="toggle-wrap">
+          <div>
+            <div class="t-label" style="font-weight:600">Vegetarian</div>
+            <div class="t-label t-muted" style="margin-top:2px">AI will consider dietary restrictions</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="pf-veg" ${p.vegetarian?'checked':''}/>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-block" onclick="saveProfile()" style="margin-bottom:12px">Save Profile</button>
+    ${p.name ? `<button class="btn btn-danger btn-block btn-sm" onclick="deleteProfile()">Delete Profile</button>` : ''}
+  `;
+}
+
+function saveProfile() {
+  const name = document.getElementById('pf-name').value.trim();
+  if (!name) { toast('Please enter a name'); return; }
+  STATE.profile = {
+    name,
+    age: parseInt(document.getElementById('pf-age').value) || null,
+    gender: document.getElementById('pf-gender').value,
+    height: parseFloat(document.getElementById('pf-height').value) || null,
+    weight: parseFloat(document.getElementById('pf-weight').value) || null,
+    vegetarian: document.getElementById('pf-veg').checked,
+  };
+  save();
+  toast('Profile saved ✓');
+  renderProfile();
+  renderHome();
+}
+
+function deleteProfile() {
+  if (confirm('Delete profile?')) {
+    STATE.profile = null;
+    save();
+    renderProfile();
+    renderHome();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+renderHome();
+</script>
+</body>
+</html>
